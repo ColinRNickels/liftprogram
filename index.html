@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lifting Program — iPhone Friendly</title>
+<meta name="color-scheme" content="dark">
+<style>
+  :root{
+    --bg:#0b0f15; --card:#121a26; --muted:#9fb0c9; --text:#e8edf4;
+    --border:#1f2937; --accent:#67e8f9; --accent2:#a78bfa;
+    --fs:16px; --row-h:38px;
+  }
+  *{box-sizing:border-box}
+  html{height:100%; font-size:var(--fs)}
+  body{margin:0; min-height:100%; background:#0b0f15; color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+  a{color:var(--accent);text-decoration:none}
+  a:active,a:hover{text-decoration:underline}
+  .appbar{position:sticky;top:0;z-index:20;background:#0b0f15f2;backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
+  .wrap{max-width:1000px;margin:0 auto;padding:12px 14px}
+  h1{margin:6px 0 0;font-size:1.25rem;font-weight:800}
+  .sub{color:var(--muted);font-size:.85rem;margin-top:2px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .tab,.btn{border:1px solid var(--border);background:#121a26;color:var(--text);padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:.9rem}
+  .tab.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.10));color:var(--accent)}
+  .grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+  @media(min-width:820px){.grid{grid-template-columns:repeat(3,1fr)}}
+  .card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(103,232,249,.04),rgba(167,139,250,.04))}
+  .card h2{margin:0;padding:10px 12px;border-bottom:1px solid var(--border);font-size:1rem}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  tr{height:var(--row-h)}
+  tbody tr:active, tbody tr:hover{background:rgba(103,232,249,.10)}
+  .badge{display:inline-block;font-size:.7rem;padding:2px 6px;border-radius:999px;border:1px solid #2a3a52;color:#9fb0c9;margin-right:6px}
+  .sets{color:#9fb0c9;font-size:.9rem}
+  .overlay{position:fixed;inset:0;z-index:50;display:none;background:rgba(0,0,0,.6)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#0f1625;border-top:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:0 -16px 40px rgba(0,0,0,.35);max-height:85vh;display:flex;flex-direction:column}
+  .handle{width:52px;height:5px;background:#334155;border-radius:999px;margin:10px auto}
+  .sheet header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border)}
+  .sheet h3{margin:0;font-size:1.05rem}
+  .close{background:#121a26;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-weight:800}
+  .content{padding:10px 12px;overflow:auto}
+  .video{aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+  .video iframe{width:100%;height:100%;border:0;display:block}
+  .cues{margin:10px 0 0 16px}
+  .checks{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .checks label{display:flex;align-items:center;gap:6px;background:#0d1423;border:1px solid var(--border);border-radius:10px;padding:6px 8px;font-size:.85rem;color:#9fb0c9}
+  .scaleBox{display:flex;gap:6px;align-items:center;margin-left:auto}
+  .scaleBox .btn{padding:6px 10px}
+</style>
+</head>
+<body>
+  <div class="appbar">
+    <div class="wrap">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div>
+          <h1>Lifting Program — iPhone</h1>
+          <div class="sub">Dense overview with one‑tap details. Barbell only for Bench & Deadlift.</div>
+        </div>
+        <div class="scaleBox">
+          <button class="btn" id="smaller">A−</button>
+          <button class="btn" id="bigger">A+</button>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="tab active" data-filter="all">All</button>
+        <button class="tab" data-filter="A">A</button>
+        <button class="tab" data-filter="B">B</button>
+        <button class="tab" data-filter="C">C</button>
+        <button class="btn" onclick="window.print()">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="grid" id="cards"></section>
+  </main>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Exercise details">
+    <div class="sheet" id="sheet">
+      <div class="handle"></div>
+      <header>
+        <h3 id="dTitle">Exercise</h3>
+        <button class="close" id="close">Close</button>
+      </header>
+      <div class="content">
+        <div class="video" id="dVideo"></div>
+        <p class="sub" id="dSets" style="margin-top:10px"></p>
+        <ul class="cues" id="dCues"></ul>
+        <div class="checks" id="dChecks"></div>
+        <p class="sub">Tip: If video playback stalls in app, use Share → Open in Safari.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const PROGRAM = [
+  { key:'A', label:'A — Push', rows:[
+    {n:'Barbell Bench Press', s:'4×8', yt:'rT7DgCr-3pg', cues:[
+      'Scapulae retracted; moderate arch; feet planted.',
+      'Bar path: slightly toward face down, back over shoulders up.',
+      'Wrists stacked; no bounce.'
+    ]},
+    {n:'Incline Dumbbell Press', s:'3×10', yt:'8iPEnn-ltC8', cues:[
+      'Bench 30–45°; shoulders down/back.','45° dumbbell path; slight pause.'
+    ]},
+    {n:'Seated Overhead DB Press', s:'3×10', yt:'B-aVuyhvLHU', cues:[
+      'Ribs down; avoid over‑arch.','Elbows slightly forward; soft lockout.'
+    ]},
+    {n:'Goblet / DB Squat', s:'3×8–10', yt:'6xwGFn-J_Qw', cues:[
+      'Brace; sit between knees; chest tall.','Knees track over toes.'
+    ]},
+    {n:'Cable Lateral Raise', s:'3×12', yt:'q5sNYB1yGEY', cues:[
+      'Lead with elbows; stop just past shoulder height.','Slow eccentric; avoid shrug.'
+    ]}
+  ]},
+  { key:'B', label:'B — Pull', rows:[
+    {n:'Barbell Deadlift', s:'3×5 (Wk1 65 lb • Wk2 85 lb • Wk3 95–105 lb)', yt:'ntr64W6ZWB0', cues:[
+      'Bar over mid‑foot; shins ~1 in away; grip outside knees.',
+      'Hips/shoulders rise together; bar stays close.','Reset each rep; no bounce.'
+    ]},
+    {n:'Bent‑Over Barbell Row', s:'3×8–10', yt:'vT2GjY_Umpw', cues:[
+      'Hinge 30–45°; brace.','Row to lower ribs; control down.'
+    ]},
+    {n:'Lat Pulldown', s:'3×10–12', yt:'CAwf7n6Luuc', cues:[
+      'Slight lean; elbows to ribs; minimal swing.','Full stretch at top; pause near chest.'
+    ]},
+    {n:'Seated Cable Row', s:'3×10', yt:'GZbfZ033f74', cues:[
+      'Neutral spine; pull to navel/low chest; scap squeeze.','Controlled return; no shrug.'
+    ]},
+    {n:'Incline DB Curl', s:'3×10', yt:'soxrZlIl35U', cues:[
+      'Elbows back; long eccentric.','Squeeze at top; full extension.'
+    ]}
+  ]},
+  { key:'C', label:'C — Lower / Core', rows:[
+    {n:'Romanian Deadlift (DB)', s:'3×8', yt:'uhghy9pFIPY', cues:[
+      'Soft knees; hips back; shins near vertical.','DBs close; stop before rounding; drive hips through.'
+    ]},
+    {n:'Leg Press', s:'3×10', yt:'IZxyjW7MPJQ', cues:[
+      'Feet mid‑sled; depth without pelvis tuck; no knee lock.','Even pressure whole foot.'
+    ]},
+    {n:'Walking DB Lunge', s:'3×10 each', yt:'D7KaRcUTQeE', cues:[
+      'Long step; front shin vertical.','Pull through front leg; balance between steps.'
+    ]},
+    {n:'Hanging Knee Raise / Chair', s:'3×12', yt:'VmB1G1K7v94', cues:[
+      'Posterior pelvic tilt; curl up.','No swinging; slow down.'
+    ]},
+    {n:'Cable Face Pull', s:'3×12', yt:'rep-qVOkqgk', cues:[
+      'Rope to nose/forehead; elbows high; ER.','Pause and slow return.'
+    ]}
+  ]}
+];
+
+const cards = document.getElementById('cards');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('close');
+const dTitle = document.getElementById('dTitle');
+const dVideo = document.getElementById('dVideo');
+const dSets = document.getElementById('dSets');
+const dCues = document.getElementById('dCues');
+const dChecks = document.getElementById('dChecks');
+
+function build(){
+  cards.innerHTML='';
+  PROGRAM.forEach(group=>{
+    const sec = document.createElement('section');
+    sec.className='card'; sec.dataset.day=group.key;
+    const h2 = document.createElement('h2'); h2.textContent = group.label; sec.appendChild(h2);
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr><th>Exercise</th><th>Sets</th><th>Day</th></tr></thead><tbody></tbody>`;
+    const tb = table.querySelector('tbody');
+    group.rows.forEach((r, i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><span class="badge">${i+1}</span>${r.n}</td><td class="sets">${r.s}</td><td>${group.key}</td>`;
+      tr.onclick = ()=>openOverlay(group.key, i, r);
+      tb.appendChild(tr);
+    });
+    sec.appendChild(table);
+    cards.appendChild(sec);
+  });
+}
+build();
+
+function openOverlay(dayKey, idx, r){
+  dTitle.textContent = r.n;
+  dVideo.innerHTML = `<iframe src="https://www.youtube.com/embed/${r.yt}?rel=0&modestbranding=1&playsinline=1" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${r.n}"></iframe>`;
+  dSets.textContent = `Prescription: ${r.s}`;
+  dCues.innerHTML = r.cues.map(c=>`<li>${c}</li>`).join('');
+  dChecks.innerHTML='';
+  for(let s=1;s<=5;s++){
+    const id = `iph_${dayKey}_${idx}_set_${s}`;
+    const lb = document.createElement('label');
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = localStorage.getItem(id)==='1';
+    cb.onchange = ()=>localStorage.setItem(id, cb.checked?'1':'0');
+    lb.appendChild(cb); lb.appendChild(document.createTextNode('Set '+s));
+    dChecks.appendChild(lb);
+  }
+  overlay.style.display = 'block';
+}
+function closeOverlay(){ overlay.style.display='none'; dVideo.innerHTML=''; }
+closeBtn.onclick = closeOverlay;
+overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeOverlay(); });
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+    document.querySelectorAll('.card').forEach(card=>{
+      card.style.display = (f==='all'||card.dataset.day===f)?'block':'none';
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+document.getElementById('smaller').onclick = ()=>{
+  const cur = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const next = Math.max(14, cur - 1);
+  document.documentElement.style.fontSize = next+'px';
+  localStorage.setItem('fs', next);
+};
+document.getElementById('bigger').onclick = ()=>{
+  const cur = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const next = Math.min(22, cur + 1);
+  document.documentElement.style.fontSize = next+'px';
+  localStorage.setItem('fs', next);
+};
+const savedFs = localStorage.getItem('fs'); if(savedFs){ document.documentElement.style.fontSize = savedFs+'px'; }
+</script>
+</body>
+</html>
