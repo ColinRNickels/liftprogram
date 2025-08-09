@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifting Program — Dense + Detail</title>
+<meta name="color-scheme" content="dark">
+<style>
+  :root{
+    --bg:#0b0f15; --elev:#0f1520; --card:#121a26; --muted:#9fb0c9; --text:#e8edf4;
+    --border:#1e293b; --accent:#67e8f9; --accent2:#a78bfa; --ok:#34d399; --warn:#fbbf24;
+    --scale:1; /* zoom scale */
+    --row-h-ultra:30px;
+    --row-h-cozy:42px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    background:radial-gradient(1200px 700px at 80% -10%,#0d1420 0%, transparent 60%), #0b0f15;
+    transform:scale(var(--scale)); transform-origin: top center;
+  }
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .appbar{position:sticky;top:0;z-index:30;background:#0b0f15e6;backdrop-filter:saturate(150%) blur(8px);border-bottom:1px solid var(--border)}
+  .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}
+  h1{margin:6px 0 2px;font-size:clamp(18px,2.4vw,26px);font-weight:800}
+  .sub{color:var(--muted);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .tab{border:1px solid var(--border);background:linear-gradient(180deg,#0f172a,#0e1525);color:var(--text);padding:6px 10px;border-radius:999px;cursor:pointer;font-weight:700;font-size:12px}
+  .tab.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.12));border-color:#334155;color:var(--accent)}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+  .seg button{padding:6px 10px;background:#0f1625;border:0;color:var(--text);font-weight:700;font-size:12px;cursor:pointer}
+  .seg button.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.10));color:var(--accent)}
+  .scale{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .scale input{width:140px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+  @media(min-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
+  .card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(103,232,249,.04),rgba(167,139,250,.04))}
+  .card h2{margin:0;padding:10px 12px;border-bottom:1px solid var(--border);font-size:14px;letter-spacing:.2px}
+  .dense{width:100%;border-collapse:collapse}
+  .dense thead th{position:sticky;top:calc(54px + 12px);background:#0f1520;z-index:1}
+  .dense th,.dense td{border-bottom:1px solid var(--border);padding:0 8px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dense tr{height:var(--row-h);}
+  .dense tbody tr:hover{background:rgba(103,232,249,.07);cursor:pointer}
+  .badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:999px;border:1px solid #2a3a52;color:#9fb0c9}
+  .sets{color:#9fb0c9;font-size:12px}
+  .videoTag{font-size:10px;color:#8fb5ff}
+  .drawer{position:fixed;left:0;right:0;bottom:-100%;background:#0f1625;border-top:1px solid var(--border);box-shadow:0 -16px 40px rgba(0,0,0,.35);z-index:40;transition:bottom .28s ease}
+  .drawer.open{bottom:0}
+  .drawer .wrap{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:980px){.drawer .wrap{grid-template-columns:1.3fr .8fr}}
+  .drawer h3{margin:6px 0;font-size:18px}
+  .drawer .meta{color:var(--muted);font-size:13px;margin-top:-4px}
+  .panel{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0e1524}
+  .panel header{padding:10px 12px;border-bottom:1px solid var(--border);font-weight:800}
+  .panel .content{padding:10px 12px}
+  .video{aspect-ratio:16/9;background:#000}
+  .video iframe{width:100%;height:100%;border:0;display:block}
+  .x{position:absolute;right:16px;top:10px;background:#0f1625;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer}
+  .checksets{display:flex;gap:8px;flex-wrap:wrap}
+  .checksets label{display:flex;align-items:center;gap:6px;background:#0d1423;border:1px solid var(--border);border-radius:10px;padding:6px 8px;font-size:12px;color:var(--muted)}
+  .checksets input{width:16px;height:16px;accent-color:var(--ok)}
+  .note{color:var(--muted);font-size:12px}
+  .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#111827;border:1px solid var(--border);border-radius:6px;padding:2px 6px}
+  .footer{color:var(--muted);font-size:12px;text-align:center;padding:14px}
+  /* density */
+  .ultra{--row-h:var(--row-h-ultra);}
+  .cozy{--row-h:var(--row-h-cozy);}
+  /* print */
+  @media print{
+    .appbar,.drawer,.footer{display:none}
+    body{transform:none}
+    .grid{grid-template-columns:repeat(3,1fr)}
+    .dense thead th{top:0}
+  }
+</style>
+</head>
+<body class="ultra">
+  <div class="appbar">
+    <div class="wrap">
+      <div>
+        <h1>Lifting Program — At‑a‑Glance & Detail</h1>
+        <div class="sub">Dense overview with one‑click details. Barbell only for Bench & Deadlift. Videos included.</div>
+      </div>
+      <div class="controls">
+        <button class="tab active" data-filter="all" title="Show all (0)">All</button>
+        <button class="tab" data-filter="A" title="Day A (1)">A</button>
+        <button class="tab" data-filter="B" title="Day B (2)">B</button>
+        <button class="tab" data-filter="C" title="Day C (3)">C</button>
+        <div class="seg" role="tablist">
+          <button id="denseUltra" class="active" title="Z">Ultra</button>
+          <button id="denseCozy">Cozy</button>
+        </div>
+        <div class="scale">
+          <span>Scale</span>
+          <input id="scale" type="range" min="0.9" max="1.4" step="0.01">
+          <span id="scaleVal"></span>
+        </div>
+        <button class="tab" onclick="window.print()">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="grid" id="cards"></section>
+  </main>
+
+  <div class="drawer" id="drawer" aria-live="polite">
+    <button class="x" onclick="closeDrawer()">Close ✕</button>
+    <div class="wrap">
+      <section class="panel">
+        <header id="dTitle">Exercise</header>
+        <div class="content">
+          <div class="video" id="dVideo"></div>
+          <div class="note" id="dSets" style="margin-top:8px"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <header>Technique cues</header>
+        <div class="content" id="dCues"></div>
+        <header style="border-top:1px solid var(--border)">Track sets</header>
+        <div class="content">
+          <div class="checksets" id="dChecks"></div>
+          <p class="note">Checkboxes save to this browser. Reset from your browser storage if needed.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="footer">
+    Shortcuts: <span class="kbd">1</span>/<span class="kbd">2</span>/<span class="kbd">3</span>/<span class="kbd">0</span> switch days •
+    <span class="kbd">Z</span> toggle Ultra/Cozy • <span class="kbd">+</span>/<span class="kbd">–</span> scale • <span class="kbd">Esc</span> close details
+  </div>
+
+<script>
+const PROGRAM = [
+  {
+    key:'A', label:'A — Push',
+    rows:[
+      {n:'Barbell Bench Press', s:'4×8', yt:'rT7DgCr-3pg', cues:[
+        'Scapulae retracted; moderate arch; feet planted.',
+        'Bar path: slightly toward face on descent, back over shoulders on press.',
+        'Wrists stacked over forearms; don’t bounce the bar.'
+      ]},
+      {n:'Incline Dumbbell Press', s:'3×10', yt:'8iPEnn-ltC8', cues:[
+        'Set bench 30–45°. Shoulders down and back.',
+        'Dumbbells track at ~45° angle; slight pause near chest.'
+      ]},
+      {n:'Seated Overhead DB Press', s:'3×10', yt:'B-aVuyhvLHU', cues:[
+        'Ribs down; glutes on pad; do not over‑arch.',
+        'Elbows slightly forward of shoulders; lockout softly.'
+      ]},
+      {n:'Goblet / DB Squat', s:'3×8–10', yt:'6xwGFn-J_Qw', cues:[
+        'Brace; descend between knees; keep chest tall.',
+        'Knees track over toes; full-foot pressure.'
+      ]},
+      {n:'Cable Lateral Raise', s:'3×12', yt:'q5sNYB1yGEY', cues:[
+        'Lead with elbows; slight lean; stop just past shoulder height.',
+        'Slow eccentric; avoid shrugging.'
+      ]}
+    ]
+  },
+  {
+    key:'B', label:'B — Pull',
+    rows:[
+      {n:'Barbell Deadlift', s:'3×5 (Wk1 65 lb • Wk2 85 lb • Wk3 95–105 lb)', yt:'ntr64W6ZWB0', cues:[
+        'Bar over mid‑foot; shins 1 in away; grip just outside knees.',
+        'Hips and shoulders rise together; drag bar up legs.',
+        'Full reset each rep; no bouncing.'
+      ]},
+      {n:'Bent‑Over Barbell Row', s:'3×8–10', yt:'vT2GjY_Umpw', cues:[
+        'Hinge to ~30–45° torso; brace hard.',
+        'Row to lower ribs/upper abs; pause; control down.'
+      ]},
+      {n:'Lat Pulldown (Cable)', s:'3×10–12', yt:'CAwf7n6Luuc', cues:[
+        'Slight lean; pull elbows to ribs; minimal body swing.',
+        'Full stretch at top; pause near chest.'
+      ]},
+      {n:'Seated Cable Row', s:'3×10', yt:'GZbfZ033f74', cues:[
+        'Neutral spine; pull to navel/low chest; squeeze scapulae.',
+        'Control return; avoid shrugging.'
+      ]},
+      {n:'Incline Dumbbell Curl', s:'3×10', yt:'soxrZlIl35U', cues:[
+        'Elbows stay back; long eccentric; avoid swinging.',
+        'Squeeze at top; full extension at bottom.'
+      ]}
+    ]
+  },
+  {
+    key:'C', label:'C — Lower / Core',
+    rows:[
+      {n:'Romanian Deadlift (DB)', s:'3×8', yt:'uhghy9pFIPY', cues:[
+        'Soft knees; push hips back; shins near vertical.',
+        'Keep dumbbells close; stop before back rounds; drive hips through.'
+      ]},
+      {n:'Leg Press (Machine)', s:'3×10', yt:'IZxyjW7MPJQ', cues:[
+        'Feet mid‑sled; full depth without pelvis tuck; do not lock knees.',
+        'Even pressure through whole foot.'
+      ]},
+      {n:'Walking DB Lunge', s:'3×10 each', yt:'D7KaRcUTQeE', cues:[
+        'Long step; front shin vertical; torso tall.',
+        'Pull forward with front leg; balance before next step.'
+      ]},
+      {n:'Hanging Knee Raise / Chair', s:'3×12', yt:'VmB1G1K7v94', cues:[
+        'Posteriorly tilt pelvis; curl pelvis up—not just hip flexion.',
+        'Avoid swinging; control down.'
+      ]},
+      {n:'Cable Face Pull', s:'3×12', yt:'rep-qVOkqgk', cues:[
+        'Rope to nose/forehead; elbows high; external rotate.',
+        'Pause at peak; slow return.'
+      ]}
+    ]
+  }
+];
+
+// Build dense cards (A/B/C tables)
+const cards = document.getElementById('cards');
+function build(){
+  cards.innerHTML='';
+  PROGRAM.forEach(group=>{
+    const sec = document.createElement('section');
+    sec.className='card';
+    sec.dataset.day=group.key;
+    const h2 = document.createElement('h2'); h2.textContent = group.label; sec.appendChild(h2);
+    const table = document.createElement('table');
+    table.className='dense';
+    table.innerHTML = `<thead><tr>
+      <th style="width:46%">Exercise</th>
+      <th style="width:22%">Sets</th>
+      <th style="width:18%">Video</th>
+      <th style="width:14%">Day</th>
+    </tr></thead><tbody></tbody>`;
+    const tb = table.querySelector('tbody');
+    group.rows.forEach((r, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="badge">${idx+1}</span> ${r.n}</td>
+        <td class="sets">${r.s}</td>
+        <td class="videoTag">YouTube</td>
+        <td>${group.key}</td>
+      `;
+      tr.addEventListener('click', ()=>openDrawer(group.key, group.label, idx, r));
+      tb.appendChild(tr);
+    });
+    sec.appendChild(table);
+    cards.appendChild(sec);
+  });
+}
+build();
+
+// Drawer logic
+const drawer = document.getElementById('drawer');
+const dTitle = document.getElementById('dTitle');
+const dVideo = document.getElementById('dVideo');
+const dSets  = document.getElementById('dSets');
+const dCues  = document.getElementById('dCues');
+const dChecks= document.getElementById('dChecks');
+let CURRENT_ID = null;
+
+function openDrawer(dayKey, dayLabel, idx, r){
+  CURRENT_ID = `ex_${dayKey}_${idx}`;
+  dTitle.textContent = `${r.n}`;
+  dVideo.innerHTML = `<iframe src="https://www.youtube.com/embed/${r.yt}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${r.n}"></iframe>`;
+  dSets.textContent = `Prescription: ${r.s}`;
+  dCues.innerHTML = `<ul style="margin:0 0 6px 16px;padding:0">${r.cues.map(c=>`<li>${c}</li>`).join('')}</ul>`;
+  // build checkboxes (save per exercise: 5 slots)
+  dChecks.innerHTML = '';
+  for(let i=1;i<=5;i++){
+    const id = `${CURRENT_ID}_set_${i}`;
+    const wrap = document.createElement('label');
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = localStorage.getItem(id)==='1';
+    cb.addEventListener('change', ()=>localStorage.setItem(id, cb.checked?'1':'0'));
+    wrap.appendChild(cb); wrap.appendChild(document.createTextNode('Set '+i));
+    dChecks.appendChild(wrap);
+  }
+  drawer.classList.add('open');
+  // focus for accessibility
+  setTimeout(()=>{ drawer.scrollIntoView({behavior:'smooth', block:'end'}); }, 50);
+}
+function closeDrawer(){
+  dVideo.innerHTML=''; CURRENT_ID=null; drawer.classList.remove('open');
+}
+window.closeDrawer = closeDrawer;
+
+// Filters (All/A/B/C)
+document.querySelectorAll('.tab[data-filter]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab[data-filter]').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+    document.querySelectorAll('.card').forEach(card=>{
+      if(f==='all' || card.dataset.day===f) card.style.display='block';
+      else card.style.display='none';
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+// Density + Scale with persistence
+const denseUltra = document.getElementById('denseUltra');
+const denseCozy  = document.getElementById('denseCozy');
+const scale = document.getElementById('scale');
+const scaleVal = document.getElementById('scaleVal');
+
+function applyDensity(mode){
+  document.body.classList.remove('ultra','cozy');
+  document.body.classList.add(mode);
+  localStorage.setItem('density', mode);
+  denseUltra.classList.toggle('active', mode==='ultra');
+  denseCozy.classList.toggle('active', mode==='cozy');
+}
+function applyScale(val){
+  document.documentElement.style.setProperty('--scale', val);
+  scale.value = val;
+  scaleVal.textContent = Math.round(val*100)+'%';
+  localStorage.setItem('scale', val);
+}
+
+// init persisted
+applyDensity(localStorage.getItem('density') || 'ultra');
+applyScale(parseFloat(localStorage.getItem('scale')) || 1);
+
+denseUltra.addEventListener('click', ()=>applyDensity('ultra'));
+denseCozy.addEventListener('click', ()=>applyDensity('cozy'));
+scale.addEventListener('input', e=>applyScale(e.target.value));
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){ closeDrawer(); return; }
+  if(e.key==='1') document.querySelector('.tab[data-filter="A"]').click();
+  if(e.key==='2') document.querySelector('.tab[data-filter="B"]').click();
+  if(e.key==='3') document.querySelector('.tab[data-filter="C"]').click();
+  if(e.key==='0') document.querySelector('.tab[data-filter="all"]').click();
+  if(e.key.toLowerCase()==='z'){
+    const next = document.body.classList.contains('ultra') ? 'cozy' : 'ultra';
+    applyDensity(next);
+  }
+  if(e.key==='+'){ applyScale(Math.min(1.4, (+scale.value + 0.02)).toFixed(2)); }
+  if(e.key==='-'){ applyScale(Math.max(0.9, (+scale.value - 0.02)).toFixed(2)); }
+});
+
+</script>
+</body>
+</html>
