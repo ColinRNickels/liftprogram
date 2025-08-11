@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lifting Program — Mobile (Short Clips)</title>
+<title>Lifting Program — Mobile (Embedded Clips)</title>
 <meta name="color-scheme" content="dark">
 <style>
-  :root{--bg:#0b0f15;--card:#121a26;--muted:#9fb0c9;--text:#e8edf4;--border:#1f2937;--accent:#67e8f9;--fs:16px;--row-h:40px}
+  :root{--bg:#0b0f15;--card:#121a26;--muted:#9fb0c9;--text:#e8edf4;--border:#1f2937;--accent:#67e8f9;--fs:16px;--row-h:44px}
   html{height:100%;font-size:var(--fs)}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
   .appbar{position:sticky;top:0;z-index:20;background:#0b0f15f2;backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
@@ -22,18 +22,22 @@
   .card h2{margin:0;padding:10px 12px;border-bottom:1px solid var(--border);font-size:1rem}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  tr{height:var(--row-h)}
-  tbody tr:hover{background:rgba(103,232,249,.10)}
+  tr.data{height:var(--row-h)}
+  tr.embed-row td{padding:0;background:#0f1625}
   .badge{display:inline-block;font-size:.7rem;padding:2px 6px;border-radius:999px;border:1px solid #2a3a52;color:#9fb0c9;margin-right:6px}
-  .video-btn{color:var(--accent);text-decoration:none}
+  .vbtn{border:1px solid var(--border);background:#101725;color:var(--text);padding:6px 10px;border-radius:10px;font-weight:800;cursor:pointer}
+  .vbtn.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.10));color:var(--accent)}
+  .player{width:100%;aspect-ratio:16/9;display:none}
+  .player.open{display:block}
+  .player iframe{width:100%;height:100%;border:0;display:block}
   .footer{color:var(--muted);font-size:.8rem;text-align:center;padding:16px}
 </style>
 </head>
 <body>
 <div class="appbar">
   <div class="wrap">
-    <h1>Lifting Program — Mobile (Short Clips)</h1>
-    <div class="sub">Sunday off • Max 2 days on • Short, direct videos only</div>
+    <h1>Lifting Program — Mobile (Embedded Clips)</h1>
+    <div class="sub">Sunday off • Max 2 days on • Embedded, concise videos</div>
     <div class="controls">
       <button class="tab active" data-filter="all">All</button>
       <button class="tab" data-filter="A">A</button>
@@ -47,55 +51,87 @@
   <section class="grid" id="cards"></section>
 </main>
 
-<footer class="footer">Tip: If a clip opens in the app viewer, tap “Open in YouTube” for full controls.</footer>
+<footer class="footer">Tap ▶ to toggle a mini player. Tap again to close.</footer>
 
 <script>
-// Short, to-the-point videos (mostly under ~2 minutes or YouTube Shorts).
+// Each item uses a YouTube ID (yt). Shorts work with /embed/ID too.
 const PROGRAM=[
   {key:'A',label:'A — Push / Stability',rows:[
-    {n:'Barbell Bench Press',s:'4×8',v:'https://www.youtube.com/watch?v=tcAI41kXNlo'},
-    {n:'Incline Dumbbell Press',s:'3×10',v:'https://www.youtube.com/watch?v=PZecKOpWOrk'},
-    {n:'Seated Overhead Dumbbell Press',s:'3×10',v:'https://www.youtube.com/shorts/fAlu-BsnPqE'},
-    {n:'Suitcase Carry — 25 m per arm',s:'3–4 sets',v:'https://www.youtube.com/watch?v=3RKKnZhhelE'},
-    {n:'Cable Lateral Raise',s:'3×12',v:'https://www.youtube.com/shorts/HCfU6LGpgMk'}
+    {n:'Barbell Bench Press',s:'4×8',yt:'tcAI41kXNlo'},      // ~2 min
+    {n:'Incline Dumbbell Press',s:'3×10',yt:'IP4oeKh1Sd4'},  // ~2 min
+    {n:'Seated Overhead Dumbbell Press',s:'3×10',yt:'fAlu-BsnPqE'}, // Short
+    {n:'Suitcase Carry — 25 m per arm',s:'3–4 sets',yt:'3RKKnZhhelE'}, // concise
+    {n:'Cable Lateral Raise',s:'3×12',yt:'HCfU6LGpgMk'}      // Short
   ]},
   {key:'B',label:'B — Pull / Deadlift Focus',rows:[
-    {n:'Barbell Deadlift',s:'3×5',v:'https://www.youtube.com/watch?v=lrG2o8rbk_E'},
-    {n:'Bent-Over Barbell Row',s:'3×8–10',v:'https://www.youtube.com/shorts/Nqh7q3zDCoQ'},
-    {n:'Lat Pulldown (Cable)',s:'3×10–12',v:'https://www.youtube.com/shorts/jULa7guhCdM'},
-    {n:'Seated Cable Row',s:'3×10',v:'https://www.youtube.com/shorts/8QuMq1GMMng'},
-    {n:'Incline Dumbbell Curl',s:'3×10',v:'https://www.youtube.com/watch?v=HhHHBj3qTJ4'}
+    {n:'Barbell Deadlift',s:'3×5',yt:'3W-g4SGb26o'},         // 1-min
+    {n:'Bent-Over Barbell Row',s:'3×8–10',yt:'Nqh7q3zDCoQ'}, // Short
+    {n:'Lat Pulldown (Cable)',s:'3×10–12',yt:'jULa7guhCdM'}, // Short
+    {n:'Seated Cable Row',s:'3×10',yt:'vwHG9Jfu4sw'},        // ~2 min
+    {n:'Incline Dumbbell Curl',s:'3×10',yt:'HhHHBj3qTJ4'}    // ~2 min
   ]},
   {key:'C',label:'C — Lower / Core',rows:[
-    {n:'Romanian Deadlift (Dumbbells)',s:'3×8',v:'https://www.youtube.com/shorts/5rIqP63yWFg'},
-    {n:'Leg Press (Machine)',s:'3×10',v:'https://www.youtube.com/shorts/nDh_BlnLCGc'},
-    {n:'Walking Dumbbell Lunge',s:'3×10 each leg',v:'https://www.youtube.com/shorts/5eQd_hsXESI'},
-    {n:'Hanging Knee Raise / Captain’s Chair',s:'3×12',v:'https://www.youtube.com/watch?v=F3-vRC8f5IY'},
-    {n:'Cable Face Pull',s:'3×12',v:'https://www.youtube.com/shorts/xKpXv80Yz14'}
+    {n:'Romanian Deadlift (Dumbbells)',s:'3×8',yt:'5rIqP63yWFg'}, // Short
+    {n:'Leg Press (Machine)',s:'3×10',yt:'nDh_BlnLCGc'},          // Short
+    {n:'Walking Dumbbell Lunge',s:'3×10 each leg',yt:'5eQd_hsXESI'}, // Short
+    {n:'Hanging Knee Raise / Captain’s Chair',s:'3×12',yt:'F3-vRC8f5IY'}, // concise
+    {n:'Cable Face Pull',s:'3×12',yt:'xKpXv80Yz14'}               // Short
   ]}
 ];
 
 const cards=document.getElementById('cards');
+
+function rowTemplate(dayKey, idx, r){
+  const tr = document.createElement('tr'); tr.className='data';
+  tr.innerHTML = `<td><span class="badge">${idx+1}</span>${r.n}</td>
+                  <td>${r.s}</td>
+                  <td><button class="vbtn" data-day="${dayKey}" data-idx="${idx}">▶</button></td>`;
+  const trEmbed = document.createElement('tr'); trEmbed.className='embed-row';
+  const td = document.createElement('td'); td.colSpan = 3;
+  td.innerHTML = `<div class="player" id="player_${dayKey}_${idx}"></div>`;
+  trEmbed.appendChild(td);
+  return [tr, trEmbed];
+}
+
 function build(){
   cards.innerHTML='';
   PROGRAM.forEach(group=>{
     const sec=document.createElement('section');
-    sec.className='card';sec.dataset.day=group.key;
-    const h2=document.createElement('h2');h2.textContent=group.label;sec.appendChild(h2);
+    sec.className='card'; sec.dataset.day=group.key;
+    const h2=document.createElement('h2'); h2.textContent=group.label; sec.appendChild(h2);
     const table=document.createElement('table');
     table.innerHTML='<thead><tr><th>Exercise</th><th>Sets</th><th>Video</th></tr></thead><tbody></tbody>';
-    const tb=table.querySelector('tbody');
+    const tb = table.querySelector('tbody');
     group.rows.forEach((r,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td><span class="badge">${i+1}</span>${r.n}</td><td>${r.s}</td><td><a class="video-btn" href="${r.v}" target="_blank" rel="noopener">▶</a></td>`;
-      tb.appendChild(tr);
+      const [tr, trEmbed] = rowTemplate(group.key, i, r);
+      tb.appendChild(tr); tb.appendChild(trEmbed);
     });
     sec.appendChild(table);
     cards.appendChild(sec);
   });
+
+  document.querySelectorAll('.vbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const day = btn.dataset.day; const idx = btn.dataset.idx;
+      const player = document.getElementById(`player_${day}_${idx}`);
+      const open = player.classList.contains('open');
+      // close any open player
+      document.querySelectorAll('.player.open').forEach(p=>{ p.classList.remove('open'); p.innerHTML=''; });
+      document.querySelectorAll('.vbtn.active').forEach(b=>b.classList.remove('active'));
+      if(!open){
+        const id = PROGRAM.find(g=>g.key===day).rows[idx].yt;
+        player.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Video"></iframe>`;
+        player.classList.add('open'); btn.classList.add('active');
+        player.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    });
+  });
 }
+
 build();
 
+// Tabs
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
