@@ -1,148 +1,476 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Lifting Program — Mobile (Embedded Clips)</title>
-<meta name="color-scheme" content="dark">
 <style>
-  :root{--bg:#0b0f15;--card:#121a26;--muted:#9fb0c9;--text:#e8edf4;--border:#1f2937;--accent:#67e8f9;--fs:16px;--row-h:44px}
-  html{height:100%;font-size:var(--fs)}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-  .appbar{position:sticky;top:0;z-index:20;background:#0b0f15f2;backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
-  .wrap{max-width:1100px;margin:0 auto;padding:12px 14px}
-  h1{margin:6px 0 0;font-size:1.25rem;font-weight:800}
-  .sub{color:var(--muted);font-size:.85rem;margin-top:2px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-  .tab{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:.9rem}
-  .tab.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.10));color:var(--accent)}
-  .grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
-  @media(min-width:820px){.grid{grid-template-columns:repeat(3,1fr)}}
-  .card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(103,232,249,.04),rgba(167,139,250,.04))}
-  .card h2{margin:0;padding:10px 12px;border-bottom:1px solid var(--border);font-size:1rem}
-  table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  tr.data{height:var(--row-h)}
-  tr.embed-row td{padding:0;background:#0f1625}
-  .badge{display:inline-block;font-size:.7rem;padding:2px 6px;border-radius:999px;border:1px solid #2a3a52;color:#9fb0c9;margin-right:6px}
-  .vbtn{border:1px solid var(--border);background:#101725;color:var(--text);padding:6px 10px;border-radius:10px;font-weight:800;cursor:pointer}
-  .vbtn.active{background:linear-gradient(180deg,rgba(103,232,249,.18),rgba(167,139,250,.10));color:var(--accent)}
-  .player{width:100%;aspect-ratio:16/9;display:none}
-  .player.open{display:block}
-  .player iframe{width:100%;height:100%;border:0;display:block}
-  .footer{color:var(--muted);font-size:.8rem;text-align:center;padding:16px}
+  :root {
+    --bg: #0f1216;
+    --panel: #141922;
+    --panel-2: #181e28;
+    --text: #e7ecf2;
+    --muted: #a8b3c7;
+    --accent: #5aa2ff;
+    --border: #223045;
+    --chip: #0c1422;
+    --shadow: 0 6px 20px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box }
+  html, body { height: 100% }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    background: radial-gradient(1200px 800px at 70% -10%, #152235 0%, var(--bg) 55%);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1100px; margin: 36px auto; padding: 0 16px }
+  .title { font-size: clamp(20px, 2vw + 12px, 28px); font-weight: 800; letter-spacing:.2px; margin: 0 0 24px }
+
+  #schedule-container {
+    margin-bottom: 24px;
+    max-width: 420px;
+  }
+  #today-schedule {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+  }
+  #other-days-schedule {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .day-item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 5px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+  }
+  .day-item:hover {
+      border-color: #385685;
+  }
+  .day-item .day-name {
+    font-weight: 600;
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+  .day-item .day-prog {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .day-item.is-active {
+    padding: 10px 24px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #173256, #12233b);
+    border-color: #2b4670;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    min-width: 150px;
+  }
+  .day-item.is-active .day-name {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 700;
+    text-transform: none;
+  }
+  .day-item.is-active .day-prog {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .day-item.is-today::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 99px;
+    background-color: var(--accent);
+    box-shadow: 0 0 4px var(--accent);
+  }
+  .day-item.is-active.is-today::before {
+    top: 8px;
+    right: 8px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    max-width: 420px;
+  }
+  .tab-btn {
+    background: var(--chip);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .tab-btn[aria-pressed="true"] {
+    background: linear-gradient(180deg, #173256, #12233b);
+    border-color: #2b4670;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  .sections { display: grid; gap: 16px; margin-top: 18px; }
+  @media (min-width: 900px) {
+    .sections { grid-template-columns: repeat(3, 1fr) }
+  }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-hd {
+    padding: 14px 16px;
+    font-weight: 700;
+    font-size: 15px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card .rest-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+  }
+
+  .list { display: grid }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr minmax(84px, auto) 36px;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .row:first-child { border-top: 0 }
+
+  .idx {
+    width: 26px; height: 26px; display: grid; place-items: center;
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); font-size: 13px; background: #0c1420;
+    flex: none;
+  }
+  .name { display: flex; gap: 10px; align-items: center; min-width: 0 }
+  .label {
+    font-weight: 600; font-size: 15px;
+    overflow: hidden; text-overflow: ellipsis;
+    word-break: keep-all;
+  }
+  .sets {
+    text-align: right;
+    white-space: nowrap;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    padding-left: 8px;
+  }
+
+  .play {
+    width: 32px; height: 32px; display: grid; place-items: center;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: #0c1420; cursor: pointer;
+  }
+  .play svg { width: 16px; height: 16px; fill: var(--text); opacity: .9 }
+  .play:hover { outline: 2px solid #2b46704f }
+
+  dialog {
+    border: 0; padding: 0; border-radius: 16px;
+    width: min(900px, 92vw); background: #0b111b; color: var(--text);
+    box-shadow: 0 30px 70px rgba(0,0,0,.6); overflow: hidden;
+  }
+  dialog::backdrop {
+    background: rgba(9,14,22,.6);
+  }
+  .modal-hd { display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-bottom: 1px solid var(--border); background:#0f1726; }
+  .modal-hd b { font-size: 14px }
+  .close { border: 1px solid var(--border); background: #0c1420; color: var(--text);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .frame-wrap { aspect-ratio: 16 / 9; background: #000 }
+  .frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block }
+  .scrim { position: fixed; inset: 0; background: rgba(9,14,22,.6) }
+  .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0 }
 </style>
 </head>
 <body>
-<div class="appbar">
   <div class="wrap">
-    <h1>Lifting Program — Mobile (Embedded Clips)</h1>
-    <div class="sub">Sunday off • Max 2 days on • Embedded, concise videos</div>
-    <div class="controls">
-      <button class="tab active" data-filter="all">All</button>
-      <button class="tab" data-filter="A">A</button>
-      <button class="tab" data-filter="B">B</button>
-      <button class="tab" data-filter="C">C</button>
+    <h1 class="title">Lifting Program</h1>
+
+    <div id="schedule-container">
+      <div id="today-schedule"></div>
+      <div id="other-days-schedule"></div>
+    </div>
+
+    <div id="sections" class="sections" aria-live="polite"></div>
+
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab-btn" data-filter="all">All</button>
+      <button class="tab-btn" data-filter="A">A</button>
+      <button class="tab-btn" data-filter="B">B</button>
+      <button class="tab-btn" data-filter="C">C</button>
     </div>
   </div>
-</div>
 
-<main class="wrap">
-  <section class="grid" id="cards"></section>
-</main>
-
-<footer class="footer">Tap ▶ to toggle a mini player. Tap again to close.</footer>
+  <div id="backdrop" class="scrim" hidden></div>
+  <dialog id="player">
+    <div class="modal-hd">
+      <b id="videoTitle">Video</b>
+      <button class="close" id="closeBtn" type="button">Close</button>
+    </div>
+    <div class="frame-wrap">
+      <iframe id="videoFrame" title="Exercise video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen></iframe>
+    </div>
+  </dialog>
 
 <script>
-// Each item uses a YouTube ID (yt). Shorts work with /embed/ID too.
-const PROGRAM=[
-  {key:'A',label:'A — Push / Stability',rows:[
-    {n:'Barbell Bench Press',s:'4×8',yt:'tcAI41kXNlo'},      // ~2 min
-    {n:'Incline Dumbbell Press',s:'3×10',yt:'IP4oeKh1Sd4'},  // ~2 min
-    {n:'Seated Overhead Dumbbell Press',s:'3×10',yt:'fAlu-BsnPqE'}, // Short
-    {n:'Suitcase Carry — 25 m per arm',s:'3–4 sets',yt:'3RKKnZhhelE'}, // concise
-    {n:'Cable Lateral Raise',s:'3×12',yt:'HCfU6LGpgMk'}      // Short
-  ]},
-  {key:'B',label:'B — Pull / Deadlift Focus',rows:[
-    {n:'Barbell Deadlift',s:'3×5',yt:'3W-g4SGb26o'},         // 1-min
-    {n:'Bent-Over Barbell Row',s:'3×8–10',yt:'Nqh7q3zDCoQ'}, // Short
-    {n:'Lat Pulldown (Cable)',s:'3×10–12',yt:'jULa7guhCdM'}, // Short
-    {n:'Seated Cable Row',s:'3×10',yt:'vwHG9Jfu4sw'},        // ~2 min
-    {n:'Incline Dumbbell Curl',s:'3×10',yt:'HhHHBj3qTJ4'}    // ~2 min
-  ]},
-  {key:'C',label:'C — Lower / Core',rows:[
-    {n:'Romanian Deadlift (Dumbbells)',s:'3×8',yt:'5rIqP63yWFg'}, // Short
-    {n:'Leg Press (Machine)',s:'3×10',yt:'nDh_BlnLCGc'},          // Short
-    {n:'Walking Dumbbell Lunge',s:'3×10 each leg',yt:'5eQd_hsXESI'}, // Short
-    {n:'Hanging Knee Raise / Captain’s Chair',s:'3×12',yt:'F3-vRC8f5IY'}, // concise
-    {n:'Cable Face Pull',s:'3×12',yt:'xKpXv80Yz14'}               // Short
-  ]}
+/* Data: put YouTube EMBED URLs in `video` fields. Use ?start=&end=. */
+const NBSP = "\u00A0";
+const NNBSP = "\u202F";
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEK_DAYS_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SCHEDULE_KEYS = ['Rest', 'A', 'B', 'Rest', 'C', 'B', 'A'];
+const REST_IMAGES = [
+  "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", // Foggy Forest Path
+  "https://images.pexels.com/photos/1034584/pexels-photo-1034584.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", // Lakeside Cabin
+  "https://images.pexels.com/photos/691668/pexels-photo-691668.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", // Serene Mountain Valley
+  "https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", // Tranquil Zen Garden
+  "https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"  // Beach at Sunset
 ];
 
-const cards=document.getElementById('cards');
 
-function rowTemplate(dayKey, idx, r){
-  const tr = document.createElement('tr'); tr.className='data';
-  tr.innerHTML = `<td><span class="badge">${idx+1}</span>${r.n}</td>
-                  <td>${r.s}</td>
-                  <td><button class="vbtn" data-day="${dayKey}" data-idx="${idx}">▶</button></td>`;
-  const trEmbed = document.createElement('tr'); trEmbed.className='embed-row';
-  const td = document.createElement('td'); td.colSpan = 3;
-  td.innerHTML = `<div class="player" id="player_${dayKey}_${idx}"></div>`;
-  trEmbed.appendChild(td);
-  return [tr, trEmbed];
+const PROGRAM = [
+  {
+    key: "A",
+    title: "A — Push / Stability",
+    items: [
+      { name: "Barbell Bench Press",            sets: "4×8",                video: "https://www.youtube.com/embed/sIjdDfwsxUw?start=15&end=45" },
+      { name: "Incline Dumbbell Press",         sets: "3×10",               video: "https://www.youtube.com/embed/J_UbiifeU8I?start=5&end=30" },
+      { name: "Seated Overhead Dumbbell Press", sets: "3×10",               video: "https://www.youtube.com/embed/fXFDAigeSk8" },
+      { name: "Suitcase Carry — 25" + NNBSP + "m/arm", sets: "3–4" + NBSP + "sets", video: "https://www.youtube.com/embed/taFIJ3dbS28?start=5&end=35" },
+      { name: "Cable Lateral Raise",            sets: "3×12",               video: "https://www.youtube.com/embed/v_cT9G-5y_A?start=15&end=45" },
+    ],
+  },
+  {
+    key: "B",
+    title: "B — Pull / Deadlift Focus",
+    items: [
+      { name: "Barbell Deadlift",        sets: "3×5",        video: "https://www.youtube.com/embed/DCEIwcA_gJo?start=10&end=40" },
+      { name: "Bent-Over Barbell Row",   sets: "3×8–10",     video: "https://www.youtube.com/embed/vnGSs0qnD8Q?start=5&end=25" },
+      { name: "Lat Pulldown (Cable)",    sets: "3×10–12",    video: "https://www.youtube.com/embed/AtcrCtnah98?start=10&end=40" },
+      { name: "Seated Cable Row",        sets: "3×10",       video: "https://www.youtube.com/embed/uZ0r6iYcLwo?start=5&end=30" },
+      { name: "Incline Dumbbell Curl",   sets: "3×10",       video: "https://www.youtube.com/embed/FM7725AeXPA" },
+    ],
+  },
+  {
+    key: "C",
+    title: "C — Lower / Core",
+    items: [
+      { name: "Romanian Deadlift (Dumbbells)", sets: "3×8",       video: "https://www.youtube.com/embed/08StUopZee8?start=10&end=40" },
+      { name: "Leg Press (Machine)",           sets: "3×10",      video: "https://www.youtube.com/embed/fM2WvgirlLM?start=5&end=30" },
+      { name: "Walking Dumbbell Lunge",        sets: "3×10/leg",  video: "https://www.youtube.com/embed/9gglI77Kzq8" },
+      { name: "Hanging Knee Raise / Captain’s Chair", sets: "3×12", video: "https://www.youtube.com/embed/u3dRrxytkBo" },
+      { name: "Cable Face Pull",               sets: "3×12",      video: "https://www.youtube.com/embed/CruifQcSALU?start=5&end=25" },
+    ],
+  },
+];
+
+const $sections = document.getElementById("sections");
+const $player = document.getElementById("player");
+const $frame  = document.getElementById("videoFrame");
+const $title  = document.getElementById("videoTitle");
+const $backdrop = document.getElementById("backdrop");
+const $close = document.getElementById("closeBtn");
+const $scheduleContainer = document.getElementById('schedule-container');
+
+let viewedDayIndex;
+const todayIndex = new Date().getDay();
+
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null) continue;
+    el.appendChild(typeof kid === "string" ? document.createTextNode(kid) : kid);
+  }
+  return el;
 }
 
-function build(){
-  cards.innerHTML='';
-  PROGRAM.forEach(group=>{
-    const sec=document.createElement('section');
-    sec.className='card'; sec.dataset.day=group.key;
-    const h2=document.createElement('h2'); h2.textContent=group.label; sec.appendChild(h2);
-    const table=document.createElement('table');
-    table.innerHTML='<thead><tr><th>Exercise</th><th>Sets</th><th>Video</th></tr></thead><tbody></tbody>';
-    const tb = table.querySelector('tbody');
-    group.rows.forEach((r,i)=>{
-      const [tr, trEmbed] = rowTemplate(group.key, i, r);
-      tb.appendChild(tr); tb.appendChild(trEmbed);
-    });
-    sec.appendChild(table);
-    cards.appendChild(sec);
-  });
+function render(filter = "all") {
+  $sections.innerHTML = "";
+  if (filter === 'Rest') {
+    const randomIndex = Math.floor(Math.random() * REST_IMAGES.length);
+    const imageUrl = REST_IMAGES[randomIndex];
+    $sections.innerHTML = `<div class="card" style="grid-column: 1 / -1; padding: 0;"><img src="${imageUrl}" class="rest-image" alt="A relaxing image for a rest day."></div>`;
+    return;
+  }
+  const groups = PROGRAM.filter(s => filter === "all" || s.key === filter);
+  for (const group of groups) {
+    const card = h("section", { class: "card", "data-section": group.key });
+    card.appendChild(h("div", { class: "card-hd" }, `${group.title}`));
+    const list = h("div", { class: "list", role: "list" },
+      group.items.map((it, i) =>
+        h("div", { class: "row", role: "listitem" },
+          h("div", { class: "name" },
+            h("div", { class: "idx", "aria-hidden": "true" }, String(i+1)),
+            h("div", {},
+              h("div", { class: "label" }, it.name),
+              h("div", { class: "sr" }, `${group.key} · Exercise ${i+1}`)
+            )
+          ),
+          h("div", { class: "sets" }, it.sets),
+          h("button", {
+            class: "play", type: "button", title: "Play clip",
+            onClick: () => openVideo(it),
+            "aria-label": `Play video for ${it.name}`,
+          }, svgPlay())
+        )
+      )
+    );
+    card.appendChild(list);
+    $sections.appendChild(card);
+  }
+}
 
-  document.querySelectorAll('.vbtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const day = btn.dataset.day; const idx = btn.dataset.idx;
-      const player = document.getElementById(`player_${day}_${idx}`);
-      const open = player.classList.contains('open');
-      // close any open player
-      document.querySelectorAll('.player.open').forEach(p=>{ p.classList.remove('open'); p.innerHTML=''; });
-      document.querySelectorAll('.vbtn.active').forEach(b=>b.classList.remove('active'));
-      if(!open){
-        const id = PROGRAM.find(g=>g.key===day).rows[idx].yt;
-        player.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Video"></iframe>`;
-        player.classList.add('open'); btn.classList.add('active');
-        player.scrollIntoView({behavior:'smooth', block:'center'});
+function renderSchedule(activeDayIndex) {
+  const $todayContainer = document.getElementById('today-schedule');
+  const $otherContainer = document.getElementById('other-days-schedule');
+  $todayContainer.innerHTML = '';
+  $otherContainer.innerHTML = '';
+
+  const orderedDays = [1, 2, 3, 4, 5, 6, 0]; // Mon -> Sun
+
+  for (const dayIndex of orderedDays) {
+    const isActive = dayIndex === activeDayIndex;
+    const item = h('div', { class: 'day-item', 'data-day-index': dayIndex });
+    
+    if (dayIndex === todayIndex) item.classList.add('is-today');
+
+    const dayNameString = isActive ? WEEK_DAYS_FULL[dayIndex] : WEEK_DAYS[dayIndex];
+    const dayName = h('span', { class: 'day-name' }, dayNameString);
+    const progName = h('span', { class: 'day-prog' }, SCHEDULE_KEYS[dayIndex]);
+    item.append(dayName, progName);
+
+    if (isActive) {
+      item.classList.add('is-active');
+      $todayContainer.appendChild(item);
+    } else {
+      $otherContainer.appendChild(item);
+    }
+  }
+}
+
+function updateViewForDay(dayIndex) {
+    viewedDayIndex = dayIndex;
+    const programKey = SCHEDULE_KEYS[viewedDayIndex];
+
+    renderSchedule(viewedDayIndex);
+    render(programKey);
+    
+    document.querySelectorAll(".tab-btn").forEach(b => b.setAttribute("aria-pressed", "false"));
+    const activeTab = document.querySelector(`.tab-btn[data-filter="${programKey}"]`);
+    if (activeTab) {
+      activeTab.setAttribute("aria-pressed", "true");
+    } else {
+      document.querySelector('.tab-btn[data-filter="all"]').setAttribute("aria-pressed", "true");
+    }
+}
+
+
+function svgPlay() {
+  const el = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  el.setAttribute("viewBox","0 0 24 24");
+  el.innerHTML = '<path d="M8 5.14v13.72a1 1 0 0 0 1.52.86l10.02-6.86a1 1 0 0 0 0-1.72L9.52 4.28A1 1 0 0 0 8 5.14zM4 6a2 2 0 0 1 2-2h1v2H6v12h1v2H6a2 2 0 0 1-2-2V6z"/>';
+  return el;
+}
+
+function openVideo(item) {
+  if (!item.video) {
+    alert("No video set for this exercise.");
+    return;
+  }
+  $title.textContent = item.name;
+  $frame.src = item.video + (item.video.includes("?") ? "&" : "?") + "autoplay=1&rel=0&modestbranding=1";
+  $backdrop.hidden = false;
+  $player.showModal?.();
+}
+function closeVideo() {
+  $frame.src = "";
+  $player.close?.();
+}
+
+function addScheduledDaysToTitles() {
+    const programDays = {};
+    PROGRAM.forEach(p => { programDays[p.key] = [] });
+    SCHEDULE_KEYS.forEach((key, index) => {
+      if (programDays[key]) {
+        programDays[key].push(WEEK_DAYS[index]);
       }
     });
-  });
+    PROGRAM.forEach(program => {
+      const days = programDays[program.key];
+      if (days && days.length > 0) {
+        program.title += ` — ${days.join(', ')}`;
+      }
+    });
 }
 
-build();
+$player.addEventListener('close', () => {
+  $frame.src = "";
+  $backdrop.hidden = true;
+});
+$close.addEventListener("click", closeVideo);
+$player.addEventListener("click", (event) => {
+  if (event.target === $player) closeVideo();
+});
 
-// Tabs
-document.querySelectorAll('.tab').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    btn.classList.add('active');
-    const f=btn.dataset.filter;
-    document.querySelectorAll('.card').forEach(card=>{
-      card.style.display=(f==='all'||card.dataset.day===f)?'block':'none';
-    });
-    window.scrollTo({top:0,behavior:'smooth'});
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const filter = btn.dataset.filter;
+    // When a main tab is clicked, we don't have a specific day to highlight,
+    // so we can default back to highlighting the actual current day.
+    viewedDayIndex = todayIndex;
+    renderSchedule(viewedDayIndex);
+    render(filter);
+
+    document.querySelectorAll(".tab-btn").forEach(b => b.setAttribute("aria-pressed", "false"));
+    btn.setAttribute("aria-pressed", "true");
   });
 });
+
+$scheduleContainer.addEventListener('click', (e) => {
+    const dayItem = e.target.closest('.day-item');
+    if (dayItem && dayItem.dataset.dayIndex) {
+        updateViewForDay(parseInt(dayItem.dataset.dayIndex));
+    }
+});
+
+
+// --- Initial Page Load ---
+addScheduledDaysToTitles();
+updateViewForDay(todayIndex);
+
 </script>
 </body>
 </html>
